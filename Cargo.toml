@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 tungstenite="0.11.0"
+json = "0.12.4"
 
 [dependencies.clap]
 version = "2.33.1"
