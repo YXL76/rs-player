@@ -1,27 +1,115 @@
-use std::net::TcpListener;
-use std::thread::spawn;
+extern crate urlencoding;
+use actix_web::{web, App, HttpServer};
+use urlencoding::decode;
 
-use json;
-use tungstenite::server::accept;
+use std::sync::Mutex;
 
-pub fn init_server(port: &str) {
-    let address = "127.0.0.1";
-    let server = TcpListener::bind(format!("{}:{}", address, port)).unwrap();
-    for stream in server.incoming() {
-        spawn(move || {
-            let mut websocket = accept(stream.unwrap()).unwrap();
+use super::player::Player;
 
-            loop {
-                let msg = websocket.read_message().unwrap();
-                if msg.is_text() {
-                    if let Ok(msg_) = msg.to_text() {
-                        if let Ok(parsed_) = json::parse(msg_) {
-                            println!("{}", parsed_);
-                            websocket.write_message(msg).unwrap();
-                        }
-                    }
-                }
-            }
-        });
+async fn load(player: web::Data<Mutex<Player>>, uri: web::Path<String>) -> &'static str {
+    let decoded = decode(&uri).unwrap();
+    match player.lock() {
+        Ok(mut player) => match player.load(&decoded) {
+            true => "true",
+            _ => "false",
+        },
+        _ => "false",
     }
+}
+
+async fn play(player: web::Data<Mutex<Player>>) -> &'static str {
+    match player.lock() {
+        Ok(mut player) => {
+            player.play();
+            "true"
+        }
+        _ => "false",
+    }
+}
+
+async fn pause(player: web::Data<Mutex<Player>>) -> &'static str {
+    match player.lock() {
+        Ok(mut player) => {
+            player.pause();
+            "true"
+        }
+        _ => "false",
+    }
+}
+
+async fn stop(player: web::Data<Mutex<Player>>) -> &'static str {
+    match player.lock() {
+        Ok(mut player) => {
+            player.stop();
+            "true"
+        }
+        _ => "false",
+    }
+}
+
+async fn volume(player: web::Data<Mutex<Player>>) -> String {
+    match player.lock() {
+        Ok(player) => player.volume().to_string(),
+        _ => "".to_string(),
+    }
+}
+
+async fn set_volume(player: web::Data<Mutex<Player>>) -> &'static str {
+    match player.lock() {
+        Ok(player) => {
+            player.set_volume(1.0);
+            "true"
+        }
+        _ => "false",
+    }
+}
+
+async fn is_paused(player: web::Data<Mutex<Player>>) -> &'static str {
+    match player.lock() {
+        Ok(player) => match player.is_paused() {
+            true => "true",
+            _ => "false",
+        },
+        _ => "false",
+    }
+}
+
+async fn empty(player: web::Data<Mutex<Player>>) -> &'static str {
+    match player.lock() {
+        Ok(player) => match player.empty() {
+            true => "true",
+            _ => "false",
+        },
+        _ => "false",
+    }
+}
+
+async fn position(player: web::Data<Mutex<Player>>) -> String {
+    match player.lock() {
+        Ok(player) => player.position().to_string(),
+        _ => "".to_string(),
+    }
+}
+
+#[actix_rt::main]
+pub async fn init_server(port: String) -> std::io::Result<()> {
+    let player = web::Data::new(Mutex::new(Player::new()));
+
+    HttpServer::new(move || {
+        App::new()
+            .app_data(player.clone())
+            .service(web::resource("/load/{uri}").route(web::get().to(load)))
+            .service(web::resource("/play").route(web::get().to(play)))
+            .service(web::resource("/pause").route(web::get().to(pause)))
+            .service(web::resource("/stop").route(web::get().to(stop)))
+            .service(web::resource("/volume").route(web::get().to(volume)))
+            .service(web::resource("/set_volume").route(web::get().to(set_volume)))
+            .service(web::resource("/is_paused").route(web::get().to(is_paused)))
+            .service(web::resource("/empty").route(web::get().to(empty)))
+            .service(web::resource("/position").route(web::get().to(position)))
+    })
+    .keep_alive(600)
+    .bind(format!("127.0.0.1:{}", port))?
+    .run()
+    .await
 }
