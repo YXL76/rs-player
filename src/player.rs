@@ -23,8 +23,8 @@ enum Status {
 }
 
 impl Status {
-    fn elapsed(self) -> Duration {
-        match self {
+    fn elapsed(&self) -> Duration {
+        match *self {
             Status::Stopped(d) => d,
             Status::Playing(start, extra) => start.elapsed() + extra,
         }
@@ -93,15 +93,19 @@ impl Player {
         self.status.reset();
     }
 
-    pub fn status(&self) -> bool {
-        self.state.is_playing()
-    }
-
     pub fn volume(&self) -> f32 {
         self.sink.volume()
     }
 
     pub fn set_volume(&self, volume: f32) {
         self.sink.set_volume(volume);
+    }
+
+    pub fn is_playing(&self) -> bool {
+        self.state.is_playing()
+    }
+
+    pub fn position(&self) -> u128 {
+        self.status.elapsed().as_millis()
     }
 }
