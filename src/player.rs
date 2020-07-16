@@ -50,14 +50,20 @@ impl Player {
         }
     }
 
-    pub fn load(&mut self, url: &str) {
-        println!("{}", url);
-        let file = File::open(url).unwrap();
-        let source = rodio::Decoder::new(BufReader::new(file)).unwrap();
-        self.stop();
-        self.sink = rodio::Sink::new(&self.device);
-        self.sink.append(source);
-        self.play();
+    pub fn load(&mut self, url: &str) -> bool {
+        match File::open(url) {
+            Ok(file) => match rodio::Decoder::new(BufReader::new(file)) {
+                Ok(source) => {
+                    self.stop();
+                    self.sink = rodio::Sink::new(&self.device);
+                    self.sink.append(source);
+                    self.play();
+                    true
+                }
+                _ => false,
+            },
+            _ => false,
+        }
     }
 
     pub fn play(&mut self) {
