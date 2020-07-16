@@ -2,21 +2,6 @@ use std::fs::File;
 use std::io::BufReader;
 use std::time::{Duration, Instant};
 
-enum PlayerState {
-    Stopped,
-    Paused,
-    Playing,
-}
-
-impl PlayerState {
-    fn is_playing(&self) -> bool {
-        match *self {
-            PlayerState::Stopped | PlayerState::Paused => false,
-            PlayerState::Playing => true,
-        }
-    }
-}
-
 enum Status {
     Playing(Instant, Duration),
     Stopped(Duration),
@@ -49,7 +34,6 @@ impl Status {
 
 pub struct Player {
     device: rodio::Device,
-    state: PlayerState,
     status: Status,
     sink: rodio::Sink,
 }
@@ -60,36 +44,34 @@ impl Player {
         let sink = rodio::Sink::new(&device);
 
         Player {
-            state: PlayerState::Stopped,
+            device,
             status: Status::Stopped(Duration::from_nanos(0)),
             sink,
-            device,
         }
     }
 
     pub fn load(&mut self, url: &str) {
+        println!("{}", url);
         let file = File::open(url).unwrap();
         let source = rodio::Decoder::new(BufReader::new(file)).unwrap();
         self.stop();
+        self.sink = rodio::Sink::new(&self.device);
         self.sink.append(source);
         self.play();
     }
 
     pub fn play(&mut self) {
         self.sink.play();
-        self.state = PlayerState::Playing;
         self.status.play()
     }
 
     pub fn pause(&mut self) {
         self.sink.pause();
-        self.state = PlayerState::Paused;
         self.status.stop()
     }
 
     pub fn stop(&mut self) {
         self.sink.stop();
-        self.state = PlayerState::Stopped;
         self.status.reset();
     }
 
@@ -101,8 +83,12 @@ impl Player {
         self.sink.set_volume(volume);
     }
 
-    pub fn is_playing(&self) -> bool {
-        self.state.is_playing()
+    pub fn is_paused(&self) -> bool {
+        self.sink.is_paused()
+    }
+
+    pub fn empty(&self) -> bool {
+        self.sink.empty()
     }
 
     pub fn position(&self) -> u128 {
