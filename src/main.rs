@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate clap;
 
+mod player;
 mod server;
 
 use server::init_server;
