@@ -60,10 +60,12 @@ async fn volume(player: web::Data<Mutex<Player>>) -> String {
     }
 }
 
-async fn set_volume(player: web::Data<Mutex<Player>>) -> &'static str {
+async fn set_volume(player: web::Data<Mutex<Player>>, level: web::Path<String>) -> &'static str {
+    let level: f32 = level.parse().unwrap_or(100.0);
+    let level: f32 = level / 100.0;
     match player.lock() {
         Ok(player) => {
-            player.set_volume(1.0);
+            player.set_volume(level);
             "true"
         }
         _ => "false",
@@ -100,7 +102,7 @@ async fn position(player: web::Data<Mutex<Player>>) -> String {
 async fn state(player: web::Data<Mutex<Player>>) -> String {
     match player.lock() {
         Ok(player) => format!(
-            "{{ empty: {}, playing: {}, position: {} }}",
+            "{{ \"empty\": {}, \"playing\": {}, \"position\": {} }}",
             !player.empty(),
             !player.is_paused(),
             player.position()
@@ -121,7 +123,7 @@ pub async fn init_server(port: String) -> std::io::Result<()> {
             .service(web::resource("/pause").route(web::get().to(pause)))
             .service(web::resource("/stop").route(web::get().to(stop)))
             .service(web::resource("/volume").route(web::get().to(volume)))
-            .service(web::resource("/set_volume").route(web::get().to(set_volume)))
+            .service(web::resource("/set_volume/{level}").route(web::get().to(set_volume)))
             .service(web::resource("/is_paused").route(web::get().to(is_paused)))
             .service(web::resource("/empty").route(web::get().to(empty)))
             .service(web::resource("/position").route(web::get().to(position)))
