@@ -1,15 +1,23 @@
-name: Continuous Deployment
-
 on:
     push:
-        branches:
-            - master
+        tags:
+            - "v*"
 
 jobs:
     publish:
         strategy:
             matrix:
                 os: [macos-latest, ubuntu-latest, windows-latest]
+                include:
+                    - os: macos-latest
+                      bin: rs-player
+                      prefix: macos
+                    - os: ubuntu-latest
+                      bin: rs-player
+                      prefix: linux
+                    - os: windows-latest
+                      bin: rs-player.exe
+                      prefix: win.exe
 
         name: Publishing for ${{ matrix.os }}
         runs-on: ${{ matrix.os }}
@@ -26,3 +34,11 @@ jobs:
                   toolchain: nightly
                   override: true
             - run: cargo build --release
+            - uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }}
+                  asset_path: target/release/${{ matrix.bin }}
+                  asset_name: rs-player-${{ matrix.prefix }}
+                  asset_content_type: application/zip
