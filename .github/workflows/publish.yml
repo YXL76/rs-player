@@ -1,0 +1,23 @@
+name: Continuous Deployment
+
+on:
+    push:
+        branches:
+            - master
+
+jobs:
+    publish:
+        strategy:
+            matrix:
+                os: [macos-latest, ubuntu-latest, windows-latest]
+
+        name: Publishing for ${{ matrix.os }}
+        runs-on: ${{ matrix.os }}
+
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: nightly
+                  override: true
+            - run: cargo build --release
