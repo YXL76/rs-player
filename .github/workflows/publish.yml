@@ -20,7 +20,7 @@ jobs:
                   override: true
             - run: cargo test
 
-    publish:
+    build:
         strategy:
             matrix:
                 os: [macos-latest, ubuntu-latest, windows-latest]
@@ -51,6 +51,32 @@ jobs:
                   toolchain: nightly
                   override: true
             - run: cargo build --release
+            - uses: actions/upload-artifact@v2
+              with:
+                  name: rs-player-${{ matrix.prefix }}
+                  path: target/release/${{ matrix.bin }}
+
+    Publish:
+        strategy:
+            matrix:
+                os: [macos-latest, ubuntu-latest, windows-latest]
+                include:
+                    - os: macos-latest
+                      prefix: macos
+                    - os: ubuntu-latest
+                      prefix: linux
+                    - os: windows-latest
+                      prefix: win.exe
+
+        needs: build
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/download-artifact@v2
+              with:
+                  name: rs-player-${{ matrix.prefix }}
+
             - uses: actions/create-release@v1
               id: create_release
               env:
@@ -60,11 +86,12 @@ jobs:
                   release_name: ${{ github.ref }}
                   draft: false
                   prerelease: false
+
             - uses: actions/upload-release-asset@v1
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
                   upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: target/release/${{ matrix.bin }}
+                  asset_path: ./rs-player-${{ matrix.prefix }}
                   asset_name: rs-player-${{ matrix.prefix }}
                   asset_content_type: application/zip
