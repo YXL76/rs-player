@@ -15,6 +15,11 @@ jobs:
         runs-on: ${{ matrix.os }}
 
         steps:
+            - name: Installing needed Ubuntu dependencies
+              if: matrix.os == 'ubuntu-latest'
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y libasound2-dev
             - uses: actions/checkout@v2
             - uses: actions-rs/toolchain@v1
               with:
