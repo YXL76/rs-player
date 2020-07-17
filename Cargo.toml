@@ -3,6 +3,10 @@ name = "rs-player"
 version = "0.1.0"
 authors = ["YXL <chenxin.lan.76@gmail.com>"]
 edition = "2018"
+readme = "README.md"
+repository = "https://github.com/YXL76/rs-player"
+license = "MIT"
+license-file = "LICENSE"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -15,3 +19,6 @@ urlencoding = "1.1.1"
 [dependencies.clap]
 version = "2.33.1"
 default-features = false
+
+[profile.release]
+lto = true
