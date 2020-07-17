@@ -1,3 +1,5 @@
+name: Publishing
+
 on:
     push:
         tags:
@@ -49,6 +51,15 @@ jobs:
                   toolchain: nightly
                   override: true
             - run: cargo build --release
+            - uses: actions/create-release@v1
+              id: create_release
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  tag_name: ${{ github.ref }}
+                  release_name: ${{ github.ref }}
+                  draft: false
+                  prerelease: false
             - uses: actions/upload-release-asset@v1
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
