@@ -27,13 +27,10 @@ jobs:
                 include:
                     - os: macos-latest
                       bin: rs-player
-                      prefix: macos
                     - os: ubuntu-latest
                       bin: rs-player
-                      prefix: linux
                     - os: windows-latest
                       bin: rs-player.exe
-                      prefix: win.exe
 
         needs: test
         name: Publishing for ${{ matrix.os }}
@@ -53,30 +50,15 @@ jobs:
             - run: cargo build --release
             - uses: actions/upload-artifact@v2
               with:
-                  name: rs-player-${{ matrix.prefix }}
+                  name: ${{ matrix.os }}
                   path: target/release/${{ matrix.bin }}
 
     Publish:
-        strategy:
-            matrix:
-                os: [macos-latest, ubuntu-latest, windows-latest]
-                include:
-                    - os: macos-latest
-                      prefix: macos
-                    - os: ubuntu-latest
-                      prefix: linux
-                    - os: windows-latest
-                      prefix: win.exe
-
         needs: build
         runs-on: ubuntu-latest
 
         steps:
             - uses: actions/checkout@v2
-            - uses: actions/download-artifact@v2
-              with:
-                  name: rs-player-${{ matrix.prefix }}
-
             - uses: actions/create-release@v1
               id: create_release
               env:
@@ -87,11 +69,31 @@ jobs:
                   draft: false
                   prerelease: false
 
+            - uses: actions/download-artifact@v2
+              with:
+                  path: ./artifact
+
             - uses: actions/upload-release-asset@v1
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
                   upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: ./rs-player-${{ matrix.prefix }}
-                  asset_name: rs-player-${{ matrix.prefix }}
+                  asset_path: ./artifact/macos-latest/rs-player
+                  asset_name: rs-player-mac
+                  asset_content_type: application/zip
+            - uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }}
+                  asset_path: ./artifact/ubuntu-latest/rs-player
+                  asset_name: rs-player-linux
+                  asset_content_type: application/zip
+            - uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }}
+                  asset_path: ./artifact/windows-latest/rs-player.exe
+                  asset_name: rs-player-win.exe
                   asset_content_type: application/zip
