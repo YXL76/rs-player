@@ -19,20 +19,26 @@ async fn load(player: web::Data<Mutex<Player>>, uri: web::Path<String>) -> &'sta
 
 async fn play(player: web::Data<Mutex<Player>>) -> &'static str {
     match player.lock() {
-        Ok(mut player) => {
-            player.play();
-            "true"
-        }
+        Ok(mut player) => match player.empty() {
+            false => {
+                player.play();
+                "true"
+            }
+            _ => "false",
+        },
         _ => "false",
     }
 }
 
 async fn pause(player: web::Data<Mutex<Player>>) -> &'static str {
     match player.lock() {
-        Ok(mut player) => {
-            player.pause();
-            "true"
-        }
+        Ok(mut player) => match player.empty() {
+            false => {
+                player.pause();
+                "true"
+            }
+            _ => "false",
+        },
         _ => "false",
     }
 }
