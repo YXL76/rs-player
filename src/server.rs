@@ -97,6 +97,18 @@ async fn position(player: web::Data<Mutex<Player>>) -> String {
     }
 }
 
+async fn state(player: web::Data<Mutex<Player>>) -> String {
+    match player.lock() {
+        Ok(player) => format!(
+            "{{ empty: {}, playing: {}, position: {} }}",
+            !player.empty(),
+            !player.is_paused(),
+            player.position()
+        ),
+        _ => "".to_string(),
+    }
+}
+
 #[actix_rt::main]
 pub async fn init_server(port: String) -> std::io::Result<()> {
     let player = web::Data::new(Mutex::new(Player::new()));
@@ -113,6 +125,7 @@ pub async fn init_server(port: String) -> std::io::Result<()> {
             .service(web::resource("/is_paused").route(web::get().to(is_paused)))
             .service(web::resource("/empty").route(web::get().to(empty)))
             .service(web::resource("/position").route(web::get().to(position)))
+            .service(web::resource("/state").route(web::get().to(state)))
     })
     .keep_alive(600)
     .bind(format!("127.0.0.1:{}", port))?

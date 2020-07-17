@@ -42,6 +42,7 @@ impl Player {
     pub fn new() -> Player {
         let device = rodio::default_output_device().unwrap();
         let sink = rodio::Sink::new(&device);
+        sink.pause();
 
         Player {
             device,
