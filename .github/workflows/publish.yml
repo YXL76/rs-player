@@ -8,6 +8,7 @@ on:
 jobs:
     test:
         runs-on: ubuntu-latest
+        name: Test
 
         steps:
             - run: |
@@ -33,7 +34,7 @@ jobs:
                       bin: rs-player.exe
 
         needs: test
-        name: Publishing for ${{ matrix.os }}
+        name: Build for ${{ matrix.os }}
         runs-on: ${{ matrix.os }}
 
         steps:
@@ -56,6 +57,7 @@ jobs:
     Publish:
         needs: build
         runs-on: ubuntu-latest
+        name: Publish
 
         steps:
             - uses: actions/checkout@v2
