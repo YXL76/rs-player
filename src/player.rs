@@ -53,7 +53,7 @@ impl Player {
     }
 
     pub fn load(&mut self, url: &str) -> bool {
-        let mut i = 3;
+        let mut i = 5;
         while i > 0 {
             if match File::open(url) {
                 Ok(file) => match rodio::Decoder::new(BufReader::new(file)) {
