@@ -49,6 +49,8 @@ jobs:
                   toolchain: nightly
                   override: true
             - run: cargo build --release
+            - run: chmod +x ./target/release/${{ matrix.bin }}
+              if: matrix.os != 'windows-latest'
             - uses: actions/upload-artifact@v2
               with:
                   name: ${{ matrix.os }}
