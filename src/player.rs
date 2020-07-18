@@ -34,7 +34,6 @@ impl Status {
 }
 
 pub struct Player {
-    device: rodio::Device,
     status: Status,
     sink: rodio::Sink,
 }
@@ -46,7 +45,6 @@ impl Player {
         sink.pause();
 
         Player {
-            device,
             status: Status::Stopped(Duration::from_nanos(0)),
             sink,
         }
@@ -59,7 +57,8 @@ impl Player {
                 Ok(file) => match rodio::Decoder::new(BufReader::new(file)) {
                     Ok(source) => {
                         self.stop();
-                        self.sink = rodio::Sink::new(&self.device);
+                        let device = rodio::default_output_device().unwrap();
+                        self.sink = rodio::Sink::new(&device);
                         self.sink.append(source);
                         self.play();
                         true
