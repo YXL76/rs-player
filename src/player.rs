@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::BufReader;
+use std::thread::sleep;
 use std::time::{Duration, Instant};
 
 enum Status {
@@ -52,19 +53,28 @@ impl Player {
     }
 
     pub fn load(&mut self, url: &str) -> bool {
-        match File::open(url) {
-            Ok(file) => match rodio::Decoder::new(BufReader::new(file)) {
-                Ok(source) => {
-                    self.stop();
-                    self.sink = rodio::Sink::new(&self.device);
-                    self.sink.append(source);
-                    self.play();
-                    true
-                }
+        let mut i = 3;
+        while i > 0 {
+            if match File::open(url) {
+                Ok(file) => match rodio::Decoder::new(BufReader::new(file)) {
+                    Ok(source) => {
+                        self.stop();
+                        self.sink = rodio::Sink::new(&self.device);
+                        self.sink.append(source);
+                        self.play();
+                        true
+                    }
+                    _ => false,
+                },
                 _ => false,
-            },
-            _ => false,
+            } {
+                break;
+            } else {
+                i -= 1;
+                sleep(Duration::from_millis(256));
+            }
         }
+        i > 0
     }
 
     pub fn play(&mut self) {
