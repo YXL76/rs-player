@@ -129,7 +129,7 @@ pub async fn init_server(port: String) -> std::io::Result<()> {
             .service(web::resource("/position").route(web::get().to(position)))
             .service(web::resource("/state").route(web::get().to(state)))
     })
-    .keep_alive(600)
+    .keep_alive(1200)
     .bind(format!("127.0.0.1:{}", port))?
     .run()
     .await
